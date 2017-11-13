@@ -1,0 +1,8 @@
+CREATE TABLE "user" (
+    id serial NOT NULL PRIMARY KEY,
+    username varchar(100) NOT NULL,
+    password varchar(500) NOT NULL,
+    first_name varchar(100) NOT NULL,
+    last_name varchar(100) NOT NULL,
+    favourite_currency_id INT NOT NULL
+);

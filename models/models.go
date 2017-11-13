@@ -1,5 +1,13 @@
 package models
 
+import (
+	"database/sql"
+	"fmt"
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/stefaluc/cryptofolio-server/database"
+)
+
 type User struct {
 	ID                  int    `json:"-"`
 	Username            string `json:"username"`
@@ -74,8 +82,30 @@ func InsertToken(u *User) (string, error) {
 }
 
 func GetUserFromLogin(username string) (*User, error) {
-	// TODO: Get User with Token t in DB
-	return STATIC_USER, nil
+	// Get User with Token t in DB
+	row := database.DBConn.QueryRow("SELECT * FROM \"user\" WHERE username=$1", username)
+
+	var id int
+	var usernameDb string
+	var password string
+	var first_name string
+	var last_name string
+	var favourite_currency_id int
+	err := row.Scan(&id, &usernameDb, &password, &first_name, &last_name, &favourite_currency_id)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("id | username | password | firstname | lastname | favouritecurrency")
+	fmt.Printf("%3v | %8v | %6v | %6v | %6v | %3v\n", id, usernameDb, password, first_name, last_name, favourite_currency_id)
+
+	return &User{
+		ID:                  id,
+		Username:            username,
+		Password:            password,
+		FirstName:           first_name,
+		LastName:            last_name,
+		FavouriteCurrencyID: favourite_currency_id,
+	}, nil
 }
 
 func GetUserFromToken(t *Token) (*User, error) {
@@ -84,8 +114,30 @@ func GetUserFromToken(t *Token) (*User, error) {
 }
 
 func InsertUser(u *User) (*User, error) {
-	// TODO: Create User in DB
-	return STATIC_USER, nil
+	// query for preexisting username
+	var username string
+	err := database.DBConn.QueryRow("SELECT username FROM user WHERE username=$1").Scan(&username)
+	switch {
+	// valid new user, hash password and insert into db
+	case err == sql.ErrNoRows:
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		_, err = database.DBConn.Exec(
+			"INSERT INTO \"user\"(id, username, password, first_name, last_name, favourite_currency_id) VALUES($1,$2,$3,$4,$5,$6) returning id;",
+			u.ID, u.Username, hashedPassword, u.FirstName, u.LastName, u.FavouriteCurrencyID)
+		if err != nil {
+			return nil, err
+		}
+	case err != nil:
+		return nil, err
+	// username already exists in db
+	default:
+		// TODO: handle
+	}
+
+	return nil, nil
 }
 
 func InsertBalance(u *User, crypto int) (*Balance, error) {

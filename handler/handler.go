@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stefaluc/cryptofolio-server/models"
 )
@@ -11,19 +13,24 @@ type LoginParams struct {
 }
 
 func Login(c *gin.Context, in *LoginParams) (string, error) {
-	user, err := models.GetUserFromLogin(in.Username)
+	userDb, err := models.GetUserFromLogin(in.Username)
 	if err != nil {
 		return "", err
 	}
 
-	// TODO: Check that hashing(in.Password) equals user.Password (already hashed)
-
-	token, err := models.InsertToken(user)
+	// check if password is same as db hashed password
+	err = bcrypt.CompareHashAndPassword([]byte(userDb.Password), []byte(in.Password))
 	if err != nil {
 		return "", err
 	}
 
-	return token, nil
+	// token, err := models.InsertToken(user)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// return token, nil
+	return "", nil
 }
 
 type SignUpParams struct {
@@ -31,7 +38,6 @@ type SignUpParams struct {
 }
 
 func SignUp(c *gin.Context, in *SignUpParams) error {
-	// TODO: hashing(in.Password)
 	_, err := models.InsertUser(&in.User)
 	if err != nil {
 		return err
