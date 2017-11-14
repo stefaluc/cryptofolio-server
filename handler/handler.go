@@ -3,6 +3,7 @@ package handler
 import (
 	"golang.org/x/crypto/bcrypt"
 
+	//"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stefaluc/cryptofolio-server/models"
 )
@@ -13,7 +14,7 @@ type LoginParams struct {
 }
 
 func Login(c *gin.Context, in *LoginParams) (string, error) {
-	userDb, err := models.GetUserFromLogin(in.Username)
+	userDb, err := models.GetUserFromUsername(in.Username)
 	if err != nil {
 		return "", err
 	}
@@ -24,13 +25,14 @@ func Login(c *gin.Context, in *LoginParams) (string, error) {
 		return "", err
 	}
 
-	// token, err := models.InsertToken(user)
-	// if err != nil {
-	// 	return "", err
-	// }
+	// create auth token and send to client
+	token, err := CreateToken(userDb)
+	if err != nil {
+		return "", err
+	}
+	c.Writer.Write([]byte(token))
 
-	// return token, nil
-	return "", nil
+	return token, nil
 }
 
 type SignUpParams struct {
@@ -50,12 +52,18 @@ type InsertBalanceParams struct {
 }
 
 func InsertBalance(c *gin.Context, in *InsertBalanceParams) (*models.Balance, error) {
-	// TODO: Get Token from Header
-	t := models.STATIC_TOKEN
-	user, err := models.GetUserFromToken(t)
+	// check for valid token
+	token := c.Query("token")
+	username, err := ParseToken(token)
 	if err != nil {
 		return nil, err
 	}
+
+	user, err := models.GetUserFromUsername(username)
+	if err != nil {
+		return nil, err
+	}
+
 	return models.InsertBalance(user, in.CryptocurrencyID)
 }
 
@@ -64,29 +72,46 @@ type InsertTransactionParams struct {
 }
 
 func InsertTransaction(c *gin.Context, in *InsertTransactionParams) (*models.Transaction, error) {
-	// TODO: Get Token from Header
-	t := models.STATIC_TOKEN
-	_, err := models.GetUserFromToken(t)
+	// check for valid token
+	token := c.Query("token")
+	_, err := ParseToken(token)
 	if err != nil {
 		return nil, err
 	}
+
 	// TODO: Check that the balance(in.Transaction.BalanceID) belongs to the user
 	return models.InsertTransaction(&in.Transaction)
 }
 
 func GetUser(c *gin.Context) (*models.User, error) {
-	// TODO: Get Token from Header
-	t := models.STATIC_TOKEN
-	return models.GetUserFromToken(t)
-}
-
-func GetBalances(c *gin.Context) ([]*models.Balance, error) {
-	// TODO: Get Token from Header
-	t := models.STATIC_TOKEN
-	user, err := models.GetUserFromToken(t)
+	// check for valid token
+	token := c.Query("token")
+	username, err := ParseToken(token)
 	if err != nil {
 		return nil, err
 	}
+
+	user, err := models.GetUserFromUsername(username)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func GetBalances(c *gin.Context) ([]*models.Balance, error) {
+	// check for valid token
+	token := c.Query("token")
+	username, err := ParseToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := models.GetUserFromUsername(username)
+	if err != nil {
+		return nil, err
+	}
+
 	return models.GetBalances(user)
 }
 
@@ -95,22 +120,24 @@ type GetTransactionsParams struct {
 }
 
 func GetTransactions(c *gin.Context, in *GetTransactionsParams) ([]*models.Transaction, error) {
-	// TODO: Get Token from Header
-	t := models.STATIC_TOKEN
-	_, err := models.GetUserFromToken(t)
+	// check for valid token
+	token := c.Query("token")
+	_, err := ParseToken(token)
 	if err != nil {
 		return nil, err
 	}
+
 	// TODO: Check that the balance(in.Transaction.BalanceID) belongs to the user
 	return models.GetTransactions(in.BalanceID)
 }
 
 func GetCurrencies(c *gin.Context) ([]*models.Currency, error) {
-	// TODO: Get Token from Header
-	t := models.STATIC_TOKEN
-	_, err := models.GetUserFromToken(t)
+	// check for valid token
+	token := c.Query("token")
+	_, err := ParseToken(token)
 	if err != nil {
 		return nil, err
 	}
+
 	return models.GetCurrencies()
 }

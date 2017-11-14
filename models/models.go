@@ -81,7 +81,7 @@ func InsertToken(u *User) (string, error) {
 	return STATIC_TOKEN.Token, nil
 }
 
-func GetUserFromLogin(username string) (*User, error) {
+func GetUserFromUsername(username string) (*User, error) {
 	// Get User with Token t in DB
 	row := database.DBConn.QueryRow("SELECT * FROM \"user\" WHERE username=$1", username)
 
