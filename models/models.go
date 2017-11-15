@@ -2,7 +2,7 @@ package models
 
 import (
 	"database/sql"
-	"fmt"
+	// "fmt"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/stefaluc/cryptofolio-server/database"
@@ -24,28 +24,20 @@ type Currency struct {
 }
 
 type Balance struct {
-	ID         int `json:"id"`
-	UserID     int `json:"userID"`
-	CurrencyID int `json:"currency_id"`
+	ID         int     `json:"id"`
+	UserID     int     `json:"userID"`
+	CurrencyID int     `json:"currencyID"`
+	Quantity   float32 `json:"quantity"`
 }
 
 type Transaction struct {
-	ID        int    `json:"id"`
-	BalanceID int    `json:"balanceID"`
-	Quantity  int    `json:"quantity"`
-	Price     int    `json:"price"`
-	Date      string `json:"date"`
+	ID        int     `json:"id"`
+	BalanceID int     `json:"balanceID"`
+	Quantity  float32 `json:"quantity"`
+	Price     float32 `json:"price"`
+	Date      string  `json:"date"`
 }
 
-type Token struct {
-	Token  string
-	UserID int
-}
-
-var STATIC_TOKEN = &Token{
-	Token:  "XXXXXXXXXXXXX",
-	UserID: 1,
-}
 var STATIC_USER = &User{
 	ID:                  1,
 	Username:            "BGdu59",
@@ -72,17 +64,7 @@ var STATIC_TRANSACTION = &Transaction{
 	Date:      "TODO",
 }
 
-func GetToken(username string, password string) (string, error) {
-	return STATIC_TOKEN.Token, nil
-}
-
-func InsertToken(u *User) (string, error) {
-	// TODO: Create Token in DB
-	return STATIC_TOKEN.Token, nil
-}
-
 func GetUserFromUsername(username string) (*User, error) {
-	// Get User with Token t in DB
 	row := database.DBConn.QueryRow("SELECT * FROM \"user\" WHERE username=$1", username)
 
 	var id int
@@ -95,8 +77,8 @@ func GetUserFromUsername(username string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("id | username | password | firstname | lastname | favouritecurrency")
-	fmt.Printf("%3v | %8v | %6v | %6v | %6v | %3v\n", id, usernameDb, password, first_name, last_name, favourite_currency_id)
+	// fmt.Println("id | username | password | firstname | lastname | favouritecurrency")
+	// fmt.Printf("%3v | %8v | %6v | %6v | %6v | %3v\n", id, usernameDb, password, first_name, last_name, favourite_currency_id)
 
 	return &User{
 		ID:                  id,
@@ -108,15 +90,13 @@ func GetUserFromUsername(username string) (*User, error) {
 	}, nil
 }
 
-func GetUserFromToken(t *Token) (*User, error) {
-	// TODO: Get User with Token t in DB
-	return STATIC_USER, nil
-}
-
 func InsertUser(u *User) (*User, error) {
 	// query for preexisting username
 	var username string
 	err := database.DBConn.QueryRow("SELECT username FROM user WHERE username=$1").Scan(&username)
+
+	var id int
+	var user *User
 	switch {
 	// valid new user, hash password and insert into db
 	case err == sql.ErrNoRows:
@@ -124,11 +104,20 @@ func InsertUser(u *User) (*User, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = database.DBConn.Exec(
-			"INSERT INTO \"user\"(id, username, password, first_name, last_name, favourite_currency_id) VALUES($1,$2,$3,$4,$5,$6) returning id;",
-			u.ID, u.Username, hashedPassword, u.FirstName, u.LastName, u.FavouriteCurrencyID)
+		err = database.DBConn.QueryRow(
+			"INSERT INTO \"user\"(id, username, password, first_name, last_name, favourite_currency_id) VALUES(nextval(id),$1,$2,$3,$4,$5) returning id;",
+			u.Username, string(hashedPassword), u.FirstName, u.LastName, u.FavouriteCurrencyID).Scan(&id)
 		if err != nil {
 			return nil, err
+		}
+
+		user = &User{
+			ID:                  id,
+			Username:            username,
+			Password:            string(hashedPassword),
+			FirstName:           u.FirstName,
+			LastName:            u.LastName,
+			FavouriteCurrencyID: u.FavouriteCurrencyID,
 		}
 	case err != nil:
 		return nil, err
@@ -137,29 +126,132 @@ func InsertUser(u *User) (*User, error) {
 		// TODO: handle
 	}
 
-	return nil, nil
+	return user, nil
 }
 
-func InsertBalance(u *User, crypto int) (*Balance, error) {
-	return STATIC_BALANCE, nil
+func InsertBalance(u *User, crypto int, quantity float32) (*Balance, error) {
+	var id int
+	err := database.DBConn.QueryRow(
+		"INSERT INTO \"balance\"(id, user_id, currency_id, quantity) VALUES(nextval(id),$1,$2,$3) returning id;",
+		u.ID, crypto, quantity).Scan(&id)
+	if err != nil {
+		return nil, err
+	}
+
+	balance := &Balance{
+		ID:         id,
+		UserID:     u.ID,
+		CurrencyID: crypto,
+		Quantity:   quantity,
+	}
+
+	return balance, nil
 }
 
 func InsertTransaction(t *Transaction) (*Transaction, error) {
-	// TODO: Create transaction in DB
-	return STATIC_TRANSACTION, nil
+	var id int
+	err := database.DBConn.QueryRow(
+		"INSERT INTO \"transaction\"(id, balance_id, quantity, price, date) VALUES(nextval(id),$1,$2,$3,$4) returning id;",
+		t.BalanceID, t.Quantity, t.Price, t.Date).Scan(&id)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction := &Transaction{
+		ID:        id,
+		BalanceID: t.BalanceID,
+		Quantity:  t.Quantity,
+		Price:     t.Price,
+		Date:      t.Date,
+	}
+	return transaction, nil
+
 }
 
 func GetBalances(u *User) ([]*Balance, error) {
-	// TODO
-	return []*Balance{STATIC_BALANCE}, nil
+	rows, err := database.DBConn.Query("SELECT * FROM \"balance\" WHERE user_id=$1", u.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var balances []*Balance
+	for rows.Next() {
+		var id int
+		var userID int
+		var currencyID int
+		var quantity float32
+		err := rows.Scan(&id, &userID, &currencyID, &quantity)
+		if err != nil {
+			return nil, err
+		}
+
+		balance := &Balance{
+			ID:         id,
+			UserID:     u.ID,
+			CurrencyID: currencyID,
+			Quantity:   quantity,
+		}
+		balances = append(balances, balance)
+	}
+
+	return balances, nil
 }
 
 func GetTransactions(balanceID int) ([]*Transaction, error) {
-	// TODO
-	return []*Transaction{STATIC_TRANSACTION}, nil
+	rows, err := database.DBConn.Query("SELECT * FROM \"transaction\" WHERE balanceID=$1", balanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	var transactions []*Transaction
+	for rows.Next() {
+		var id int
+		var userID int
+		var balanceID int
+		var quantity float32
+		var price float32
+		var date string
+		err := rows.Scan(&id, &userID, &balanceID, &quantity, &price, &date)
+		if err != nil {
+			return nil, err
+		}
+
+		transaction := &Transaction{
+			ID:        id,
+			BalanceID: balanceID,
+			Quantity:  quantity,
+			Price:     price,
+			Date:      date,
+		}
+		transactions = append(transactions, transaction)
+	}
+
+	return transactions, nil
 }
 
 func GetCurrencies() ([]*Currency, error) {
-	// TODO
-	return []*Currency{STATIC_CURRENCY}, nil
+	rows, err := database.DBConn.Query("SELECT * From \"currency\"")
+	if err != nil {
+		return nil, err
+	}
+
+	var currencies []*Currency
+	for rows.Next() {
+		var id int
+		var name string
+		var logoURL string
+		err := rows.Scan(&id, &name, &logoURL)
+		if err != nil {
+			return nil, err
+		}
+
+		currency := &Currency{
+			ID:      id,
+			Name:    name,
+			LogoURL: logoURL,
+		}
+		currencies = append(currencies, currency)
+	}
+
+	return currencies, nil
 }

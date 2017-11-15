@@ -48,7 +48,8 @@ func SignUp(c *gin.Context, in *SignUpParams) error {
 }
 
 type InsertBalanceParams struct {
-	CryptocurrencyID int `json:"cryptocurrencyID"`
+	CryptocurrencyID int     `json:"cryptocurrencyID"`
+	Quantity         float32 `json:"quantity"`
 }
 
 func InsertBalance(c *gin.Context, in *InsertBalanceParams) (*models.Balance, error) {
@@ -64,7 +65,7 @@ func InsertBalance(c *gin.Context, in *InsertBalanceParams) (*models.Balance, er
 		return nil, err
 	}
 
-	return models.InsertBalance(user, in.CryptocurrencyID)
+	return models.InsertBalance(user, in.CryptocurrencyID, in.Quantity)
 }
 
 type InsertTransactionParams struct {
