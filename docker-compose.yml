@@ -9,6 +9,7 @@ services:
     environment:
       POSTGRES_USER: cryptofolio
       POSTGRES_PASSWORD: cryptofolio
+      POSTGRES_DB: cryptfolio
 
   cryptofolio-server:
     image: cryptofolio-server
@@ -19,4 +20,4 @@ services:
       DB_USER: cryptofolio
       DB_PASSWORD: cryptofolio
       DB_HOST: db
-      DB_NAME: postgres
+      DB_NAME: cryptfolio
