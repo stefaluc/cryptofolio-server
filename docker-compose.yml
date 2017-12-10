@@ -20,4 +20,4 @@ services:
       DB_USER: cryptofolio
       DB_PASSWORD: cryptofolio
       DB_HOST: db
-      DB_NAME: cryptfolio
+      DB_NAME: cryptofolio
