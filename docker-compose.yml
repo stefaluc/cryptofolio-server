@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_USER: cryptofolio
       POSTGRES_PASSWORD: cryptofolio
-      POSTGRES_DB: cryptfolio
+      POSTGRES_DB: cryptofolio
 
   cryptofolio-server:
     image: cryptofolio-server
