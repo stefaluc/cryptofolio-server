@@ -1,0 +1,33 @@
+# Use postgres/example user/password credentials
+version: '3.1'
+
+networks:
+  proxy:
+    external: true
+  internal:
+    external: false
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    networks:
+      - internal
+    environment:
+      POSTGRES_USER: cryptofolio
+      POSTGRES_PASSWORD: cryptofolio
+      POSTGRES_DB: cryptofolio
+
+  cryptofolio-server:
+    image: cryptofolio-server
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - internal
+      - proxy
+    environment:
+      DB_USER: cryptofolio
+      DB_PASSWORD: cryptofolio
+      DB_HOST: db
+      DB_NAME: cryptofolio
