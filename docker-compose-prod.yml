@@ -18,8 +18,8 @@ services:
       POSTGRES_PASSWORD: cryptofolio
       POSTGRES_DB: cryptofolio
 
-  cryptofolio-server:
-    image: cryptofolio-server
+  api:
+    image: cryptofolio-server:latest
     restart: always
     networks:
       - internal
