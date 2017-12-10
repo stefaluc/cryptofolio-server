@@ -93,7 +93,7 @@ func GetUserFromUsername(username string) (*User, error) {
 func InsertUser(u *User) (*User, error) {
 	// query for preexisting username
 	var username string
-	err := database.DBConn.QueryRow("SELECT username FROM user WHERE username=$1").Scan(&username)
+	err := database.DBConn.QueryRow("SELECT username FROM \"user\" WHERE username=$1").Scan(&username)
 
 	var id int
 	var user *User
