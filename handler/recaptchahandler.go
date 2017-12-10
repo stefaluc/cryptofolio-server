@@ -1,42 +1,38 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 const (
 	recaptchaSecret = "6LfUazwUAAAAAN0bXeI8-3I3zISPpzg40i6fqrWA"
 )
 
-type RecaptchaRequest struct {
-	Secret   string `json:"secret"`
-	Response string `json:"response"`
-}
-
 type RecaptchaResponse struct {
-	Success     bool   `json:"success"`
-	ChallengeTs string `json:"challenge_ts"`
-	HostName    string `json:"hostname"`
+	Success     bool     `json:"success"`
+	ChallengeTs string   `json:"challenge_ts"`
+	HostName    string   `json:"hostname"`
+	ErrorCodes  []string `json:"error-codes"`
 }
 
 func VerifyRecaptcha(userResponse string) error {
-	url := "https://www.google.com/recaptcha/api/siteverify"
+	// POST to google recaptcha api with secret+usertoken
+	postUrl := "https://www.google.com/recaptcha/api/siteverify"
+	vals := url.Values{}
+	vals.Set("secret", recaptchaSecret)
+	vals.Add("response", userResponse)
 
-	req := &RecaptchaRequest{
-		recaptchaSecret,
-		userResponse,
-	}
-	reqJson, _ := json.Marshal(req)
-
-	res, err := http.Post(url, "authentication/json", bytes.NewBuffer(reqJson))
+	res, err := http.PostForm(postUrl, vals)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
+
+	// decode response
 	decoder := json.NewDecoder(res.Body)
 
 	resJson := &RecaptchaResponse{}
@@ -45,7 +41,6 @@ func VerifyRecaptcha(userResponse string) error {
 		return err
 	}
 	fmt.Println(resJson)
-	fmt.Println(resJson.Success)
 
 	if !resJson.Success {
 		return errors.New("Invalid success response from Google")
