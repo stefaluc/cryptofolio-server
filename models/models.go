@@ -14,7 +14,7 @@ type User struct {
 	Password            string `json:"password"`
 	FirstName           string `json:"firstName"`
 	LastName            string `json:"lastName"`
-	FavouriteCurrencyID int    `json:"favouriteCurrency"`
+	FavouriteCurrencyID int    `json:"favouriteCurrencyId"`
 }
 
 type Currency struct {
@@ -93,7 +93,7 @@ func GetUserFromUsername(username string) (*User, error) {
 func InsertUser(u *User) (*User, error) {
 	// query for preexisting username
 	var username string
-	err := database.DBConn.QueryRow("SELECT username FROM \"user\" WHERE username=$1").Scan(&username)
+	err := database.DBConn.QueryRow("SELECT username FROM \"user\" WHERE username=$1", u.Username).Scan(&username)
 
 	var id int
 	var user *User
