@@ -3,7 +3,7 @@ package handler
 import (
 	"golang.org/x/crypto/bcrypt"
 
-	//"fmt"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stefaluc/cryptofolio-server/models"
 )
@@ -37,10 +37,19 @@ func Login(c *gin.Context, in *LoginParams) (string, error) {
 
 type SignUpParams struct {
 	models.User
+	GRecaptchaResponse string `json:"gRecaptchaResponse"`
 }
 
 func SignUp(c *gin.Context, in *SignUpParams) error {
-	_, err := models.InsertUser(&in.User)
+	fmt.Println("reached signup")
+	fmt.Println(in.GRecaptchaResponse)
+	// verify correct Google Recaptcha response
+	err := VerifyRecaptcha(in.GRecaptchaResponse)
+	if err != nil {
+		return err
+	}
+
+	_, err = models.InsertUser(&in.User)
 	if err != nil {
 		return err
 	}
