@@ -105,7 +105,7 @@ func InsertUser(u *User) (*User, error) {
 			return nil, err
 		}
 		err = database.DBConn.QueryRow(
-			"INSERT INTO \"user\"(id, username, password, first_name, last_name, favourite_currency_id) VALUES(nextval(id),$1,$2,$3,$4,$5) returning id;",
+			"INSERT INTO \"user\"(username, password, first_name, last_name, favourite_currency_id) VALUES($1,$2,$3,$4,$5) returning id;",
 			u.Username, string(hashedPassword), u.FirstName, u.LastName, u.FavouriteCurrencyID).Scan(&id)
 		if err != nil {
 			return nil, err
