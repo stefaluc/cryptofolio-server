@@ -17,15 +17,13 @@ import (
 
 const (
 	defaultPort = 8080
-	dbUser      = "cryptofolio"
-	dbPassword  = "cryptofolio"
-	dbName      = "cryptofolio"
 )
 
 func main() {
 	// init DB
 	var errdb error
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", dbUser, dbPassword, dbName)
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=disable",
+	os.GetEnv("DB_USER"), os.GetEnv("DB_PASSWORD"), os.GetEnv("DB_NAME"), os.GetEnv("DB_HOST"))
 	database.DBConn, errdb = sql.Open("postgres", dbinfo)
 	if errdb != nil {
 		panic(errdb)
