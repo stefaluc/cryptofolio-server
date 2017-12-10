@@ -144,7 +144,6 @@ func InsertBalance(u *User, crypto int, quantity float32) (*Balance, error) {
 		CurrencyID: crypto,
 		Quantity:   quantity,
 	}
-
 	return balance, nil
 }
 
@@ -165,7 +164,6 @@ func InsertTransaction(t *Transaction) (*Transaction, error) {
 		Date:      t.Date,
 	}
 	return transaction, nil
-
 }
 
 func GetBalances(u *User) ([]*Balance, error) {
