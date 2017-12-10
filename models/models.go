@@ -14,7 +14,7 @@ type User struct {
 	Password            string `json:"password"`
 	FirstName           string `json:"firstName"`
 	LastName            string `json:"lastName"`
-	FavouriteCurrencyID int    `json:"favouriteCurrency"`
+	FavouriteCurrencyID int    `json:"favouriteCurrencyId"`
 }
 
 type Currency struct {
