@@ -25,7 +25,7 @@ services:
       - internal
       - proxy
     labels:
-      trafik.enable: "true"
+      traefik.enable: "true"
       traefik.backend: "api"
       traefik.frontend.rule: "Host:api.cryptfolio.ovh"
       traefik.docker.network: "proxy"
