@@ -30,7 +30,6 @@ func Login(c *gin.Context, in *LoginParams) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	c.Writer.Write([]byte(token))
 
 	return token, nil
 }
