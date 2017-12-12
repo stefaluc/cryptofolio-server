@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"strconv"
+
 	"golang.org/x/crypto/bcrypt"
 
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stefaluc/cryptofolio-server/models"
 )
@@ -40,8 +41,6 @@ type SignUpParams struct {
 }
 
 func SignUp(c *gin.Context, in *SignUpParams) error {
-	fmt.Println("reached signup")
-	fmt.Println(in.GRecaptchaResponse)
 	// verify correct Google Recaptcha response
 	err := VerifyRecaptcha(in.GRecaptchaResponse)
 	if err != nil {
@@ -87,6 +86,9 @@ func InsertTransaction(c *gin.Context, in *InsertTransactionParams) (*models.Tra
 	if err != nil {
 		return nil, err
 	}
+
+	balanceID, err := strconv.Atoi(c.Param("balance"))
+	in.BalanceID = balanceID
 
 	// TODO: Check that the balance(in.Transaction.BalanceID) belongs to the user
 	return models.InsertTransaction(&in.Transaction)

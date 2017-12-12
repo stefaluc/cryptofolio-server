@@ -14,7 +14,7 @@ type User struct {
 	Password            string `json:"password"`
 	FirstName           string `json:"firstName"`
 	LastName            string `json:"lastName"`
-	FavouriteCurrencyID int    `json:"favouriteCurrencyId"`
+	FavouriteCurrencyID int    `json:"favouriteCurrencyID"`
 }
 
 type Currency struct {
@@ -132,7 +132,7 @@ func InsertUser(u *User) (*User, error) {
 func InsertBalance(u *User, crypto int, quantity float32) (*Balance, error) {
 	var id int
 	err := database.DBConn.QueryRow(
-		"INSERT INTO \"balance\"(id, user_id, currency_id, quantity) VALUES(nextval(id),$1,$2,$3) returning id;",
+		"INSERT INTO \"balance\"(user_id, currency_id, quantity) VALUES($1,$2,$3) returning id;",
 		u.ID, crypto, quantity).Scan(&id)
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func InsertBalance(u *User, crypto int, quantity float32) (*Balance, error) {
 func InsertTransaction(t *Transaction) (*Transaction, error) {
 	var id int
 	err := database.DBConn.QueryRow(
-		"INSERT INTO \"transaction\"(id, balance_id, quantity, price, date) VALUES(nextval(id),$1,$2,$3,$4) returning id;",
+		"INSERT INTO \"transaction\"(balance_id, quantity, price, date) VALUES($1,$2,$3,$4) returning id;",
 		t.BalanceID, t.Quantity, t.Price, t.Date).Scan(&id)
 	if err != nil {
 		return nil, err
