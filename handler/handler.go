@@ -138,6 +138,9 @@ func GetTransactions(c *gin.Context, in *GetTransactionsParams) ([]*models.Trans
 		return nil, err
 	}
 
+	balanceID, err := strconv.Atoi(c.Query("balanceID"))
+	in.BalanceID = balanceID
+
 	// TODO: Check that the balance(in.Transaction.BalanceID) belongs to the user
 	return models.GetTransactions(in.BalanceID)
 }
