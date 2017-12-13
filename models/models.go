@@ -204,12 +204,11 @@ func GetTransactions(balanceID int) ([]*Transaction, error) {
 	var transactions []*Transaction
 	for rows.Next() {
 		var id int
-		var userID int
 		var balanceID int
 		var quantity float32
 		var price float32
 		var date string
-		err := rows.Scan(&id, &userID, &balanceID, &quantity, &price, &date)
+		err := rows.Scan(&id, &balanceID, &quantity, &price, &date)
 		if err != nil {
 			return nil, err
 		}
