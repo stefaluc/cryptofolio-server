@@ -196,7 +196,7 @@ func GetBalances(u *User) ([]*Balance, error) {
 }
 
 func GetTransactions(balanceID int) ([]*Transaction, error) {
-	rows, err := database.DBConn.Query("SELECT * FROM \"transaction\" WHERE balanceID=$1", balanceID)
+	rows, err := database.DBConn.Query("SELECT * FROM \"transaction\" WHERE balance_id=$1", balanceID)
 	if err != nil {
 		return nil, err
 	}
